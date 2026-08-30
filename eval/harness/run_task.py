@@ -821,6 +821,9 @@ def main() -> None:
             "economics_routing": bool(getattr(args, "economics_routing", False)),
             "routing_policy": getattr(args, "routing_policy", None),
             "budget_usd": getattr(args, "budget_usd", None),
+            # Save stdout/stderr preview for debugging (218-char errors etc.)
+            "stdout_preview": stdout[:1000] if 'stdout' in locals() else "",
+            "stderr_preview": stderr[:1000] if 'stderr' in locals() else "",
             # Extra for debugging (not required but useful)
             "repo": repo,
             "base_commit": base_commit,
