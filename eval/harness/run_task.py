@@ -340,9 +340,15 @@ def write_opencode_config(
             if darwin:
                 overlay["subagent_depth"] = max(overlay.get("subagent_depth", 1), 3)
                 # Ensure darwin plugin present when darwin=true
+                # Use file path if available (container: /darwin/packages/...), else npm spec
+                darwin_spec = "@darwin/opencode-plugin"
+                for cand in ["/darwin/packages/opencode/src/index.ts", str(Path(__file__).resolve().parents[2] / "packages/opencode/src/index.ts")]:
+                    if Path(cand).exists():
+                        darwin_spec = cand
+                        break
                 plugins = overlay.get("plugin", [])
-                if "@darwin/opencode-plugin" not in plugins:
-                    plugins = list(plugins) + ["@darwin/opencode-plugin"]
+                if darwin_spec not in plugins and "@darwin/opencode-plugin" not in plugins:
+                    plugins = list(plugins) + [darwin_spec]
                     overlay["plugin"] = plugins
             # Ensure model matches requested (overlay should already, but enforce)
             overlay["model"] = model
