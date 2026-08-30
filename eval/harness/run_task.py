@@ -768,6 +768,10 @@ def main() -> None:
         print(f"[run_task] done instance={instance_id} status={status} patch_lines={len(patch.splitlines())} duration={duration_s:.1f}s", file=sys.stderr)
         if not patch.strip():
             print(f"[run_task] warn: empty patch for {instance_id} (stdout {len(stdout)} chars, stderr {len(stderr)} chars)", file=sys.stderr)
+            if stdout.strip():
+                print(f"[run_task] stdout preview: {stdout[:500]}", file=sys.stderr)
+            if stderr.strip():
+                print(f"[run_task] stderr preview: {stderr[:500]}", file=sys.stderr)
 
     except Exception as e:
         import traceback

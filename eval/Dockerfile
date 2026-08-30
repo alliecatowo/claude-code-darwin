@@ -21,6 +21,9 @@ RUN npx tsc -p tsconfig.json --noEmit 2>&1 | tail -3 || true
 ENV OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=1
 ENV DARWIN_HOME=/darwin/workdir/darwin-data
 ENV PATH="/root/.opencode/bin:/usr/local/bin:${PATH}"
+# Auth: mount host auth at runtime (-v ~/.local/share/opencode:/root/.local/share/opencode:ro)
+# or pass LLMGATEWAY_API_KEY / ZAI_API_KEY for llmgateway models. Without auth,
+# opencode/* Zen free models will fail with "not authenticated".
 
 # Default: smoke test (2 tasks). Override with --tasks 50 for full pilot.
 CMD ["bash", "eval/scripts/run_matrix.sh", "--tasks", "2"]
