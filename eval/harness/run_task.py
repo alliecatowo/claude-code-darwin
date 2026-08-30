@@ -308,6 +308,31 @@ def create_worktree(cached_repo: Path, workdir: Path, instance_id: str) -> Path:
             print(f"[run_task] empty worktree init failed: {e}", file=sys.stderr)
         return worktree
 
+def _write_darwin_shim(worktree: Path) -> str | None:
+    """Write the file-shim plugin that loads darwin from the repo source.
+
+    The npm spec '@darwin/opencode-plugin' is not published — opencode silently
+    skips it. The shim imports the real plugin via absolute path; its deps
+    (@darwin/core, @opencode-ai/plugin, zod) resolve from the repo's
+    node_modules. Returns the shim path, or None if the plugin source is
+    unreachable (e.g. inside a container without the repo mounted).
+    """
+    candidates = [
+        Path(__file__).resolve().parents[2] / "packages" / "opencode" / "src" / "index.ts",
+        Path("/darwin/packages/opencode/src/index.ts"),
+    ]
+    src = next((c for c in candidates if c.exists()), None)
+    if src is None:
+        return None
+    shim_dir = worktree / ".opencode" / "plugin"
+    shim_dir.mkdir(parents=True, exist_ok=True)
+    shim = shim_dir / "darwin.ts"
+    shim.write_text(
+        f'import plugin from "{src}"\nexport default {{ id: "darwin", server: plugin }}\n'
+    )
+    return str(shim)
+
+
 def write_opencode_config(
     worktree: Path,
     model: str,
@@ -339,11 +364,13 @@ def write_opencode_config(
             # Ensure subagent_depth 3 for darwin parity even if overlay is minimal
             if darwin:
                 overlay["subagent_depth"] = max(overlay.get("subagent_depth", 1), 3)
-                # Ensure darwin plugin present when darwin=true
-                plugins = overlay.get("plugin", [])
-                if "@darwin/opencode-plugin" not in plugins:
-                    plugins = list(plugins) + ["@darwin/opencode-plugin"]
-                    overlay["plugin"] = plugins
+                # npm spec is unpublished: replace with the file shim (auto-discovered)
+                shim = _write_darwin_shim(worktree)
+                overlay.pop("plugin", None)
+                if shim:
+                    print(f"[run_task] darwin shim: {shim}", file=sys.stderr)
+                else:
+                    print(f"[run_task] WARN: darwin requested but plugin source not found — running WITHOUT darwin", file=sys.stderr)
             # Ensure model matches requested (overlay should already, but enforce)
             overlay["model"] = model
             # Fallbacks: if overlay lacks fallbacks but CLI provided them, inject
@@ -366,12 +393,16 @@ def write_opencode_config(
 
     # Generated config (backwards compatible)
     if darwin:
+        shim = _write_darwin_shim(worktree)
         cfg: dict = {
             "$schema": "https://opencode.ai/config.json",
             "model": model,
-            "plugin": ["@darwin/opencode-plugin"],
             "subagent_depth": 3,
         }
+        if shim:
+            print(f"[run_task] darwin shim: {shim}", file=sys.stderr)
+        else:
+            print(f"[run_task] WARN: darwin requested but plugin source not found — running WITHOUT darwin", file=sys.stderr)
     else:
         cfg = {
             "$schema": "https://opencode.ai/config.json",

@@ -73,24 +73,46 @@ print(' '.join(r['instance_id'] for r in d[:$TASKS]))
       --output "$OUT/report.json" --workdir "$SCRIPT_DIR/../workdir" 2>&1 | tail -4
     unset DARWIN_HOME
   done
+  # EVOLVE BETWEEN ROUNDS: dream consolidation on the persistent darwin home.
+  # This is the treatment — darwin reflects on the round's trajectory and
+  # consolidates memory before the next round sees the same tasks again.
+  if [[ "$ROUND" -lt "$ROUNDS" ]]; then
+    echo "--- dream consolidation before round $((ROUND+1)) ---"
+    DREAM_DIR="$SCRIPT_DIR/../workdir/dream-round${ROUND}"
+    mkdir -p "$DREAM_DIR/.opencode/plugin"
+    cp "$(find "$SCRIPT_DIR/../workdir/worktrees" -name darwin.ts -path "*round*" 2>/dev/null | head -1)" \
+       "$DREAM_DIR/.opencode/plugin/darwin.ts" 2>/dev/null || true
+    # Fall back to regenerating the shim from run_task's helper
+    if [[ ! -s "$DREAM_DIR/.opencode/plugin/darwin.ts" ]]; then
+      SRC="$SCRIPT_DIR/../../packages/opencode/src/index.ts"
+      [[ -f "$SRC" ]] && echo "import plugin from \"$SRC\"
+export default { id: \"darwin\", server: plugin }" > "$DREAM_DIR/.opencode/plugin/darwin.ts"
+    fi
+    DARWIN_HOME="$LONG_HOME" timeout 600 opencode run --dir "$DREAM_DIR" \
+      --model "$MODEL" "Consolidate your project memory now (dream): review what you learned from the tasks you just attempted, merge duplicates, promote repeated patterns and gotchas into durable memory, prune stale entries. Use the darwin_memory tool. Keep it under 60 lines total. Reply with a 3-line summary." \
+      2>&1 | tail -5
+  fi
 done
 
 # Slope report
 python3 - << 'PY'
 import json, glob, os
-root = os.path.join(os.path.dirname(__file__), "..", "results", "longitudinal")
+root = os.path.join(os.path.dirname(os.path.abspath(glob.glob("/proc/self/fd/1")[0] if False else __file__)), "..") if False else "eval/results/longitudinal"
 print("\n== longitudinal results ==")
 print(f"{'round':>5} {'vanilla':>16} {'darwin':>16}")
-for r in sorted(glob.glob(os.path.join(root, "round*"))):
-    n = os.path.basename(r).replace("round", "")
+for r in range(1, 10):
     cells = {}
+    any_dir = False
     for cond in ("vanilla", "darwin"):
-        rep = os.path.join(r, f"{cond}", "report.json")
+        rep = os.path.join(root, f"round{r}_{cond}", "report.json")
         cells[cond] = "?"
         if os.path.exists(rep):
+            any_dir = True
             j = json.load(open(rep))
             cells[cond] = f"{j.get('resolved',0)}/{j.get('total','?')} ({100*j.get('resolved_rate',0):.0f}%)"
-    print(f"{n:>5} {cells['vanilla']:>16} {cells['darwin']:>16}")
+    if not any_dir:
+        break
+    print(f"{r:>5} {cells['vanilla']:>16} {cells['darwin']:>16}")
 print("\nInterpretation: darwin column should TREND UP if self-learning helps;")
 print("vanilla should stay flat. Flat darwin = no effect; declining = pollution.")
 PY
