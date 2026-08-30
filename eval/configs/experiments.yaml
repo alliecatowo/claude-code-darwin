@@ -1,0 +1,224 @@
+# Darwin experiment matrix — single source of truth for eval harness
+# Read by eval/scripts/run_matrix.sh; do not duplicate experiment defs elsewhere.
+#
+# Design: same benchmark, same harness version, only model/darwin/routing vary.
+# See docs/EVALUATION.md §4-§5 for benchmark choice and harness details.
+#
+# Mapping to opencode.json (native fallbacks, PR #26292):
+#   experiments[].model     → opencode.json "model"
+#   experiments[].fallbacks → opencode.json "fallbacks" (tried on 429/5xx/overload, with cooldown)
+#   experiments[].darwin    → include "plugin": ["@darwin/opencode-plugin"] when true
+#   experiments[].economics_routing → darwin-side advisory (darwin_economics tool);
+#                                     no native opencode key — darwin picks model when stuck
+#                                     under routing_policy (see C-mixture comments).
+#   subagent_depth: 3 and cooldown_seconds: 300 are constant across all shapes
+#                   (see eval/configs/opencode.{vanilla,darwin}.json for minimal bases).
+#
+# Cost notes (models.dev / EVALUATION.md §3):
+#   - opencode/* = Zen free (rate-limited, ephemeral) — $0 but not citable
+#   - llmgateway/deepseek-v4-flash = $0.14/$0.28 per MTok (budget ceiling)
+#   - llmgateway/claude-sonnet-4-5 = ~$3/$15 per MTok (frontier ceiling)
+#
+# Harness pin — record the actual versions at run time via `opencode --version`
+# and `swebench --version`; these are documentation defaults:
+harness:
+  opencode_version: ">=1.18.25"
+  swebench_version: ">=5.0"
+  # AlphaDiana / swebench_container recommended for publishable runs (see EVALUATION.md §5.2 Path A)
+  runner: "alphadiana or direct swebench_container loop (see eval/scripts/run_matrix.sh)"
+  # Shared sandbox config — keep identical across all experiments for comparability
+  sandbox:
+    namespace: "swebench"
+    cache_level: "env"
+    timeout_seconds: 1800
+    max_workers: 8
+
+# Benchmark — keep identical across all shapes; only model/plugin varies.
+benchmark:
+  # Primary for pilot: SWE-bench Lite 50-task stratified sample (see EVALUATION.md §1.2 tiered plan)
+  # Main publishable: SWE-bench Lite 300 (or Verified 500 if budget allows)
+  # Stretch: Terminal-Bench 2.1 via Harbor
+  dataset: "princeton-nlp/SWE-bench_Lite"
+  split: "test"
+  # Instance list is pinned at run time; record the CSV/JSONL path in results metadata.
+  # Example: datasets/lite_50.csv  or  sweep over 300/500 via --tasks / --dataset
+  max_tasks_default: 50
+  runs_per_cell: 3
+
+# ---------------------------------------------------------------------------
+# Experiment matrix — 10 shapes (see task spec + EVALUATION.md §4.1)
+# ---------------------------------------------------------------------------
+experiments:
+  # ── Shape A: single fixed free model (baseline) ────────────────────────
+  - id: A-vanilla
+    description: "Single free model (mimo-v2.5-free), darwin OFF — baseline"
+    model: "opencode/mimo-v2.5-free"
+    fallbacks: []
+    darwin: false
+    economics_routing: false
+    # opencode.json:
+    # {
+    #   "$schema": "https://opencode.ai/config.json",
+    #   "model": "opencode/mimo-v2.5-free",
+    #   "subagent_depth": 3
+    # }
+    # // vanilla — no plugin, no fallbacks, no economics
+
+  - id: A-darwin
+    description: "Single free model (mimo-v2.5-free), darwin ON"
+    model: "opencode/mimo-v2.5-free"
+    fallbacks: []
+    darwin: true
+    economics_routing: false
+    # opencode.json:
+    # {
+    #   "$schema": "https://opencode.ai/config.json",
+    #   "model": "opencode/mimo-v2.5-free",
+    #   "subagent_depth": 3,
+    #   "plugin": ["@darwin/opencode-plugin"]
+    # }
+    # // darwin memory/dream/distill/goal + economics advisory (darwin_economics tool)
+    # // economics is non-prescriptive facet by default (no routing)
+
+  # ── Shape B: fallback chain (tests robustness of model pool) ───────────
+  - id: B-vanilla
+    description: "Fallback chain [mimo-v2.5-free → ling-3-free → big-pickle], darwin OFF"
+    model: "opencode/mimo-v2.5-free"
+    fallbacks: ["opencode/ling-3.0-flash-fin-free", "opencode/big-pickle"]
+    darwin: false
+    economics_routing: false
+    # opencode.json:
+    # {
+    #   "$schema": "https://opencode.ai/config.json",
+    #   "model": "opencode/mimo-v2.5-free",
+    #   "fallbacks": ["opencode/mimo-v2.5-free", "opencode/ling-3.0-flash-fin-free"],
+    #   "cooldown_seconds": 300,
+    #   "subagent_depth": 3
+    # }
+    # // native fallbacks tried in order on 429/5xx/overload (stream error also triggers)
+
+  - id: B-darwin
+    description: "Same chain, darwin ON"
+    model: "opencode/mimo-v2.5-free"
+    fallbacks: ["opencode/ling-3.0-flash-fin-free", "opencode/big-pickle"]
+    darwin: true
+    economics_routing: false
+    # opencode.json:
+    # {
+    #   "$schema": "https://opencode.ai/config.json",
+    #   "model": "opencode/mimo-v2.5-free",
+    #   "fallbacks": ["opencode/mimo-v2.5-free", "opencode/ling-3.0-flash-fin-free"],
+    #   "cooldown_seconds": 300,
+    #   "subagent_depth": 3,
+    #   "plugin": ["@darwin/opencode-plugin"]
+    # }
+    # // same chain as B-vanilla, plus darwin loops; isolates darwin delta on a chain
+
+  # ── Shape C: economics-routed mixture (darwin picks model when stuck) ───
+  - id: C-mixture
+    description: "Economics-routed mixture across free pool, darwin ON"
+    model: "opencode/mimo-v2.5-free"
+    fallbacks: ["opencode/mimo-v2.5-free", "opencode/ling-3.0-flash-fin-free", "opencode/nemotron-3-ultra-free"]
+    darwin: true
+    economics_routing: true
+    routing_policy: "judge-fail-then-cheapest-capable"
+    # opencode.json:
+    # {
+    #   "$schema": "https://opencode.ai/config.json",
+    #   "model": "opencode/mimo-v2.5-free",
+    #   "fallbacks": ["opencode/mimo-v2.5-free", "opencode/ling-3.0-flash-fin-free", "opencode/nemotron-3-ultra-free"],
+    #   "cooldown_seconds": 300,
+    #   "subagent_depth": 3,
+    #   "plugin": ["@darwin/opencode-plugin"]
+    # }
+    # // economics_routing is darwin-side: darwin_economics report/prices + judge signal
+    # // drives model choice. routing_policy "judge-fail-then-cheapest-capable" means:
+    # // on goal-judge fail / stall, darwin suggests cheapest model in fallbacks whose
+    # // context limit + price covers the task (prices from models.dev, offline-first).
+    # // Not a native opencode key — implemented via darwin tool + prompt guidance.
+
+  - id: C-mixture-budget50
+    description: "Same mixture + $50 DeepSeek V4 Flash as final fallback"
+    model: "opencode/mimo-v2.5-free"
+    fallbacks: ["opencode/mimo-v2.5-free", "opencode/ling-3.0-flash-fin-free", "llmgateway/deepseek-v4-flash"]
+    darwin: true
+    economics_routing: true
+    routing_policy: "judge-fail-then-cheapest-capable"
+    budget_usd: 50
+    # opencode.json:
+    # {
+    #   "$schema": "https://opencode.ai/config.json",
+    #   "model": "opencode/mimo-v2.5-free",
+    #   "fallbacks": ["opencode/mimo-v2.5-free", "opencode/ling-3.0-flash-fin-free", "llmgateway/deepseek-v4-flash"],
+    #   "cooldown_seconds": 300,
+    #   "subagent_depth": 3,
+    #   "plugin": ["@darwin/opencode-plugin"]
+    # }
+    # // budget guard: darwin tracks spend via darwin_economics turns KV
+    # // (see packages/opencode/src/index.ts ECONOMICS_BUDGET_KEY) and warns at
+    # // 80% / writes phoenix handoff at 100%. Keeps free-first but allows paid
+    # // escalation only when stuck. Compare C-mixture vs C-mixture-budget50 for
+    # // "$0 vs $50" analysis in compare.py.
+
+  # ── Ceiling baselines (expensive models, for when budget allows) ────────
+  - id: ceiling-sonnet
+    description: "Ceiling: Sonnet 4.5, darwin OFF"
+    model: "llmgateway/claude-sonnet-4-5"
+    fallbacks: []
+    darwin: false
+    economics_routing: false
+    harness: both
+    # opencode.json:
+    # {
+    #   "$schema": "https://opencode.ai/config.json",
+    #   "model": "llmgateway/claude-sonnet-4-5",
+    #   "subagent_depth": 3
+    # }
+    # // frontier ceiling — measures model headroom; no darwin, no chain
+
+  - id: ceiling-sonnet-darwin
+    description: "Ceiling: Sonnet 4.5, darwin ON"
+    model: "llmgateway/claude-sonnet-4-5"
+    fallbacks: []
+    darwin: true
+    economics_routing: false
+    harness: both
+    # opencode.json:
+    # {
+    #   "$schema": "https://opencode.ai/config.json",
+    #   "model": "llmgateway/claude-sonnet-4-5",
+    #   "subagent_depth": 3,
+    #   "plugin": ["@darwin/opencode-plugin"]
+    # }
+    # // same ceiling with darwin — paired delta isolates darwin on frontier
+
+  - id: ceiling-deepseek
+    description: "Budget ceiling: DeepSeek V4 Flash ($0.14/MTok), darwin OFF"
+    model: "llmgateway/deepseek-v4-flash"
+    fallbacks: []
+    darwin: false
+    economics_routing: false
+    harness: both
+    # opencode.json:
+    # {
+    #   "$schema": "https://opencode.ai/config.json",
+    #   "model": "llmgateway/deepseek-v4-flash",
+    #   "subagent_depth": 3
+    # }
+    # // budget ceiling from EVALUATION.md §2.3 — cheapest frontier-adjacent (79% Verified)
+
+  - id: ceiling-deepseek-darwin
+    description: "Budget ceiling: DeepSeek V4 Flash, darwin ON"
+    model: "llmgateway/deepseek-v4-flash"
+    fallbacks: []
+    darwin: true
+    economics_routing: false
+    harness: both
+    # opencode.json:
+    # {
+    #   "$schema": "https://opencode.ai/config.json",
+    #   "model": "llmgateway/deepseek-v4-flash",
+    #   "subagent_depth": 3,
+    #   "plugin": ["@darwin/opencode-plugin"]
+    # }
+    # // same budget ceiling with darwin — recommended citable harness A/B (EVALUATION.md §4.1 B1/B2)
