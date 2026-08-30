@@ -91,6 +91,32 @@ export default { id: \"darwin\", server: plugin }" > "$DREAM_DIR/.opencode/plugi
     DARWIN_HOME="$LONG_HOME" timeout 600 opencode run --dir "$DREAM_DIR" \
       --model "$MODEL" "Consolidate your project memory now (dream): review what you learned from the tasks you just attempted, merge duplicates, promote repeated patterns and gotchas into durable memory, prune stale entries. Use the darwin_memory tool. Keep it under 60 lines total. Reply with a 3-line summary." \
       2>&1 | tail -5
+    # BRIDGE: task worktrees get fresh project hashes (mkdtemp paths), so the
+    # dream dir's project memory never reaches them. Promote the dream's
+    # consolidated knowledge into GLOBAL memory, which every task digest injects.
+    python3 - "$LONG_HOME" "$DREAM_DIR" <<'PY'
+import sys, pathlib
+home, dream_dir = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+# find the dream dir's project memory (the populated one)
+best = None
+for f in (home / "memory" / "projects").glob("*/MEMORY.md"):
+    body = f.read_text().strip()
+    if len(body) > 100 and (best is None or len(body) > len(best[1])):
+        best = (f, body)
+if best:
+    glob_mem = home / "memory" / "global" / "MEMORY.md"
+    glob_mem.parent.mkdir(parents=True, exist_ok=True)
+    existing = glob_mem.read_text() if glob_mem.exists() else "# Global memory\n"
+    # append only new content (crude dedupe by line)
+    new_lines = [l for l in best[1].splitlines() if l.strip() and l not in existing]
+    if new_lines:
+        glob_mem.write_text(existing.rstrip() + "\n" + "\n".join(new_lines) + "\n")
+        print(f"[bridge] promoted {len(new_lines)} lines to global memory")
+    else:
+        print("[bridge] nothing new to promote")
+else:
+    print("[bridge] no populated dream memory found")
+PY
   fi
 done
 
