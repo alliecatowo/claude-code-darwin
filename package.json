@@ -1,0 +1,13 @@
+{
+  "name": "darwin",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "bun test packages/core"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "@types/node": "^24"
+  }
+}

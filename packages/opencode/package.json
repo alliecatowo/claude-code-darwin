@@ -1,0 +1,16 @@
+{
+  "name": "@darwin/opencode-plugin",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./server": "./src/index.ts"
+  },
+  "engines": {
+    "opencode": ">=1.17.0 <2"
+  },
+  "dependencies": {
+    "@darwin/core": "*",
+    "@opencode-ai/plugin": "^1.18.25",
+    "zod": "4.1.8"
+  }
+}
