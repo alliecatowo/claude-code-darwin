@@ -646,8 +646,8 @@ const plugin: Plugin = async (input, optionsRaw) => {
       if (state.injected.has(sid) || state.spawned.has(sid)) return
       state.injected.add(sid)
       const maxLines = state.opts.memoryDigestLines ?? 60
-      const project = readHead(projectMemoryPath(state.p, input.directory), maxLines)
-      const globalH = readHead(globalMemoryPath(state.p), 20)
+      const project = readHead(projectMemoryPath(state.p, input.directory), 120)
+      const globalH = readHead(globalMemoryPath(state.p), 150)
       const notes = readHead(sessionNotesPath(state.p, sid), 30)
       const digest = [project && `### Project memory\n${project}`, globalH && `### Global memory\n${globalH}`, notes && `### Session notes (continuation)\n${notes}`]
         .filter(Boolean)

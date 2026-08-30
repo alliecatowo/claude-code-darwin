@@ -709,6 +709,7 @@ def main() -> None:
     parser.add_argument("--dataset", default=None, help="path to dataset JSON (default: eval/datasets/lite_50.json)")
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_S, help="timeout per task in seconds (default 600)")
     parser.add_argument("--keep-worktree", action="store_true", help="keep worktree after run (for debugging)")
+    parser.add_argument("--worktree-path", default=None, help="fixed worktree path (chain mode): persistent repo checkout, stable darwin project memory; reset to base_commit per task preserving .opencode/.darwin")
     # Matrix / fallback support (from eval/configs/experiments.yaml via run_matrix.sh)
     parser.add_argument("--fallbacks", nargs="*", default=None, help="fallback model ids (native opencode fallbacks, tried on 429/5xx)")
     parser.add_argument("--fallback", dest="fallbacks", nargs="*", default=None, help=argparse.SUPPRESS)
@@ -777,8 +778,27 @@ def main() -> None:
     cost = None
 
     try:
-        cached = ensure_repo_cached(repo, base_commit, workdir)
-        worktree = create_worktree(cached, workdir, instance_id)
+        _fixed = Path(args.worktree_path) if getattr(args, "worktree_path", None) else None
+        if _fixed:
+            # CHAIN MODE: one persistent worktree at a fixed path — stable
+            # project hash so darwin's memory accumulates for THIS repo.
+            # Reset to the instance's base_commit, preserving harness dirs.
+            if not (_fixed / ".git").exists():
+                url = f"https://github.com/{repo}"
+                print(f"[run_task] chain: cloning {url} -> {_fixed}", file=sys.stderr)
+                subprocess.run(["git", "clone", url, str(_fixed)], check=True, timeout=600,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            for gs in (["git", "-C", str(_fixed), "checkout", "-f", base_commit],
+                       ["git", "-C", str(_fixed), "clean", "-fdx", "-e", ".opencode", "-e", ".darwin"]):
+                subprocess.run(gs, timeout=120, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run(["git", "-C", str(_fixed), "config", "user.email", "darwin-eval@example.com"],
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
+            subprocess.run(["git", "-C", str(_fixed), "config", "user.name", "darwin-eval"],
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
+            worktree = _fixed
+        else:
+            cached = ensure_repo_cached(repo, base_commit, workdir)
+            worktree = create_worktree(cached, workdir, instance_id)
         # Parse fallbacks: support both space-separated and comma-separated (from run_matrix.sh)
         _fallbacks: list[str] | None = None
         if getattr(args, "fallbacks", None):
@@ -854,7 +874,7 @@ def main() -> None:
         traceback.print_exc()
     finally:
         # Cleanup worktree unless keep flag
-        if worktree and worktree.exists() and not args.keep_worktree:
+        if worktree and worktree.exists() and not args.keep_worktree and not getattr(args, "worktree_path", None):
             # Keep for debugging on failure? We respect flag only; else always clean
             # For timeout/error we could keep, but spec says temp worktree — clean up
             try:
