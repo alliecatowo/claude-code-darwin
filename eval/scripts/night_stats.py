@@ -8,18 +8,21 @@ import json, glob, math, os, random, sys
 ROOT = sys.argv[1] if len(sys.argv) > 1 else "eval/results/night-latest"
 
 def load():
-    cells = {}  # (repo_slug, seed, arm) -> list[(idx, instance_id, cost, tokens, dur, patch)]
+    cells = {}  # (repo_slug, seed, arm) -> {idx: (instance_id, cost, tokens, dur, patch)}
     for arm in ("darwin", "vanilla"):
         for f in glob.glob(os.path.join(ROOT, f"predictions_{arm}_*.jsonl")):
             parts = os.path.basename(f)[len(f"predictions_{arm}_") : -len(".jsonl")].split("__seed")
             slug, seed = parts[0], parts[1] if len(parts) > 1 else "1"
-            rows = [json.loads(l) for l in open(f)]
-            rows.sort(key=lambda r: r.get("_chain_idx", 0))
-            cells[(slug, seed, arm)] = [
-                (i, r["instance_id"], r.get("cost") or 0, r.get("tokens") or 0,
-                 r.get("duration_s") or 0, bool(r.get("patch")))
-                for i, r in enumerate(rows)
-            ]
+            m = {}
+            for l in open(f):
+                try:
+                    r = json.loads(l)
+                except Exception:
+                    continue  # truncated line (quota crash etc.)
+                m[r.get("_chain_idx", len(m))] = (
+                    r["instance_id"], r.get("cost") or 0, r.get("tokens") or 0,
+                    r.get("duration_s") or 0, bool(r.get("patch")))
+            cells[(slug, seed, arm)] = m
     return cells
 
 def wilcoxon(deltas):
@@ -83,9 +86,10 @@ for (slug, seed), arms in sorted(pairs.items()):
     d, v = arms.get("darwin"), arms.get("vanilla")
     if not d or not v:
         continue
-    n = min(len(d), len(v))
+    common = sorted(set(d) & set(v))  # pair by chain index — survives missing rows
+    n = len(common)
     rc = {"cost": [], "tokens": [], "duration": []}
-    for i in range(n):
+    for i in common:
         for m, k in metrics.items():
             if v[i][k]:
                 rc[m].append((d[i][k] - v[i][k]) / v[i][k])

@@ -32,7 +32,21 @@ echo "== night matrix: repos≤$REPOS seeds=$SEEDS jobs=$JOBS model=$MODEL ==" |
 
 python3 "$SCRIPT_DIR/make_repo_chains.py" 18 "$CAP" | tee -a "$OUT/run.log"
 
-# job runner: one (repo, seed, arm) chain per job
+# Shared repo cache: clone each repo ONCE (staggered, memory-safe); arms
+# --shared-clone from it (hardlinked objects ≈ free).
+mkdir -p "$ROOT/eval/workdir/night/shared"
+while IFS=$'\t' read -r SLUG SEED ARM DS; do :; done < /dev/null # noop for IFS scoping
+for DS in $(ls "$CHAIN_DIR"/*.json | grep -v manifest); do
+  SLUG=$(basename "$DS" .json)
+  REPO=$(python3 -c "import json;print(json.load(open('$DS'))[0]['repo'])")
+  if [[ ! -d "$ROOT/eval/workdir/night/shared/$SLUG/.git" ]]; then
+    echo "cloning shared cache: $REPO" | tee -a "$OUT/run.log"
+    git clone "https://github.com/$REPO" "$ROOT/eval/workdir/night/shared/$SLUG" 2>>"$OUT/run.log"
+  fi
+done
+
+# job runner: one (repo, seed) job = darwin chain THEN vanilla chain (sequential
+# within a job halves peak memory; repos×seeds run in parallel up to JOBS slots)
 run_chain () {
   local SLUG="$1" SEED="$2" ARM="$3" DS="$4"
   local WT="$ROOT/eval/workdir/night/$SLUG-s$SEED-$ARM/repo"
@@ -41,6 +55,9 @@ run_chain () {
   : > "$PRED"
   mkdir -p "$(dirname "$WT")" "$HOME_DIR"
   export DARWIN_HOME="$HOME_DIR"
+  export DARWIN_CHAIN_SOURCE="$ROOT/eval/workdir/night/shared/$SLUG"
+  export WT_PATH="$WT"
+  export IS_DARWIN=$([[ "$ARM" == "darwin" ]] && echo 1 || echo 0)
   [[ "$ARM" == "vanilla" ]] && rm -rf "$HOME_DIR" && mkdir -p "$HOME_DIR"
   local IDS=$(python3 -c "import json;print(' '.join(r['instance_id'] for r in json.load(open('$DS'))))")
   local i=0
@@ -74,26 +91,32 @@ PY
   unset DARWIN_HOME
 }
 
-# slot pool over all (repo, seed, arm) jobs
-JOBLIST=()
+# slot pool over (repo, seed) jobs; each job runs darwin→vanilla sequentially.
 python3 - "$CHAIN_DIR/manifest.json" "$REPOS" "$SEEDS" << 'PY' > "$OUT/joblist.txt"
 import json, sys
 man = json.load(open(sys.argv[1]))[: int(sys.argv[2])]
 seeds = range(1, int(sys.argv[3]) + 1)
 for m in man:
     for s in seeds:
-        for arm in ("darwin", "vanilla"):
-            print(f"{m['slug']}\t{s}\t{arm}\t{m['path']}")
+        print(f"{m['slug']}\t{s}\tpair\t{m['path']}")
 PY
+run_pair () {
+  local SLUG="$1" SEED="$2" DS="$3"
+  run_chain "$SLUG" "$SEED" darwin "$DS"
+  run_chain "$SLUG" "$SEED" vanilla "$DS"
+}
 TOTAL=$(wc -l < "$OUT/joblist.txt"); DONE=0
-echo "0/$TOTAL jobs" | tee -a "$OUT/run.log"
-while IFS=$'\t' read -r SLUG SEED ARM DS; do
-  while [[ $(jobs -rp | wc -l) -ge $JOBS ]]; do wait -n; DONE=$((DONE+1)); echo "$DONE/$TOTAL jobs done" >> "$OUT/run.log"; done
-  DS_FILE="$DS" MODEL_ID="$MODEL" TASK_TIMEOUT="$TIMEOUT" WT_PATH="$ROOT/eval/workdir/night/$SLUG-s$SEED-$ARM/repo" IS_DARWIN=$([[ $ARM == darwin ]] && echo 1 || echo 0) \
-    run_chain "$SLUG" "$SEED" "$ARM" "$DS" &
+echo "0/$TOTAL pair-jobs" | tee -a "$OUT/run.log"
+while IFS=$'\t' read -r SLUG SEED _ARM DS; do
+  # memory guard: >=2500MB available before launching another job
+  while (( $(free -m | awk '/^Mem:/{print $7}') < 2500 )); do sleep 30; done
+  while [[ $(jobs -rp | wc -l) -ge $JOBS ]]; do wait -n; DONE=$((DONE+1)); echo "$DONE/$TOTAL pair-jobs done" >> "$OUT/run.log"; done
+  DS_FILE="$DS" MODEL_ID="$MODEL" TASK_TIMEOUT="$TIMEOUT" \
+    run_pair "$SLUG" "$SEED" "$DS" < /dev/null &
+  sleep 20  # stagger: avoid simultaneous checkouts/first-turn spikes
 done < "$OUT/joblist.txt"
 wait
-echo "$TOTAL/$TOTAL jobs done" | tee -a "$OUT/run.log"
+echo "$TOTAL/$TOTAL pair-jobs done" | tee -a "$OUT/run.log"
 
 # real swebench grading (batched per arm)
 export DOCKER_HOST=unix:///run/user/1000/podman/podman.sock
