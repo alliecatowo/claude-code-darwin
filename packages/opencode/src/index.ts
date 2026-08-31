@@ -41,6 +41,12 @@ type Options = {
   distill?: { auto?: boolean; intervalDays?: number }
   memoryDigestLines?: number
   attachSkills?: boolean
+  memory?: {
+    queryScoped?: boolean // BM25 on task text vs head dump (default true)
+    includeGlobal?: boolean // inject global memory (default false — global is for user prefs, not task knowledge)
+    includePatterns?: boolean // always include Patterns/Gotchas sections (default true)
+    bm25Floor?: number // relevance threshold (default 0.25)
+  }
 }
 
 const CORPUS_DIR = join(
@@ -646,7 +652,10 @@ const plugin: Plugin = async (input, optionsRaw) => {
       const sid = input2.sessionID
       if (state.injected.has(sid) || state.spawned.has(sid)) return
       state.injected.add(sid)
-      const isEval = !!process.env.DARWIN_EVAL || (process.env.DARWIN_HOME ?? "").includes("night")
+      const memOpts = state.opts.memory ?? {}
+      const useQueryScoped = memOpts.queryScoped !== false // default true
+      const includeGlobal = memOpts.includeGlobal === true // default false — global is for user prefs
+      const includePatterns = memOpts.includePatterns !== false // default true
       const rawQuery =
         (input2 as any).text ??
         (input2 as any).prompt ??
@@ -660,15 +669,18 @@ const plugin: Plugin = async (input, optionsRaw) => {
       const project = readHead(projectMemoryPath(state.p, dir), projectLines)
       const notes = readHead(sessionNotesPath(state.p, sid), notesLines)
       let hits: { snippet: string; type: string; path: string; score: number }[] = []
-      try {
-        const s = store()
-        reconcile(s, state.p)
-        if (query.trim()) {
-          const pid = projectId(dir)
-          hits = s.search(query, { scope: "projects", scopeId: pid, limit: 4, floor: 0.25 })
+      if (useQueryScoped) {
+        try {
+          const s = store()
+          reconcile(s, state.p)
+          if (query.trim()) {
+            const pid = projectId(dir)
+            const floor = memOpts.bm25Floor ?? 0.25
+            hits = s.search(query, { scope: "projects", scopeId: pid, limit: 4, floor })
+          }
+        } catch (err) {
+          log.warn("darwin: BM25 search failed", err instanceof Error ? err.message : String(err))
         }
-      } catch (err) {
-        log.warn("darwin: BM25 search failed", err instanceof Error ? err.message : String(err))
       }
       // Always include Patterns/Gotchas (working style) — these transfer even when specific fixes don't
       const patterns = (() => {
@@ -686,11 +698,10 @@ const plugin: Plugin = async (input, optionsRaw) => {
       })()
       const digestParts: string[] = []
       if (project) digestParts.push(`### Project memory\n${project}`)
-      if (patterns) digestParts.push(patterns)
-      if (!isEval) {
-        // global suppressed for eval; keep suppressed entirely to avoid +138% cost bloat.
-        // Intentionally no global head injection here. If needed outside eval, use BM25 hits which already cover global via search scope if desired.
-        void globalMemoryPath
+      if (includePatterns && patterns) digestParts.push(patterns)
+      if (includeGlobal) {
+        const globalH = readHead(globalMemoryPath(state.p), 30)
+        if (globalH) digestParts.push(`### Global memory\n${globalH}`)
       }
       if (notes) digestParts.push(`### Session notes (continuation)\n${notes}`)
       if (hits.length > 0) {
