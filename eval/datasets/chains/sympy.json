@@ -1,0 +1,177 @@
+[
+ {
+  "instance_id": "sympy__sympy-11400",
+  "repo": "sympy/sympy",
+  "base_commit": "8dcb12a6cf500e8738d6729ab954a261758f49ca",
+  "version": "1.0",
+  "created_at": "2016-07-15T21:40:49Z"
+ },
+ {
+  "instance_id": "sympy__sympy-11870",
+  "repo": "sympy/sympy",
+  "base_commit": "5c2e1f96a7ff562d4a778f4ca9ffc9c81557197e",
+  "version": "1.1",
+  "created_at": "2016-11-17T21:36:03Z"
+ },
+ {
+  "instance_id": "sympy__sympy-11897",
+  "repo": "sympy/sympy",
+  "base_commit": "e2918c1205c47345eb73c9be68b14c0f15fdeb17",
+  "version": "1.0",
+  "created_at": "2016-12-03T14:40:51Z"
+ },
+ {
+  "instance_id": "sympy__sympy-12171",
+  "repo": "sympy/sympy",
+  "base_commit": "ca6ef27272be31c9dc3753ede9232c39df9a75d8",
+  "version": "1.0",
+  "created_at": "2017-02-13T18:20:56Z"
+ },
+ {
+  "instance_id": "sympy__sympy-12236",
+  "repo": "sympy/sympy",
+  "base_commit": "d60497958f6dea7f5e25bc41e9107a6a63694d01",
+  "version": "1.0",
+  "created_at": "2017-03-01T14:52:16Z"
+ },
+ {
+  "instance_id": "sympy__sympy-12419",
+  "repo": "sympy/sympy",
+  "base_commit": "479939f8c65c8c2908bbedc959549a257a7c0b0b",
+  "version": "1.0",
+  "created_at": "2017-03-25T15:02:26Z"
+ },
+ {
+  "instance_id": "sympy__sympy-12454",
+  "repo": "sympy/sympy",
+  "base_commit": "d3fcdb72bfcbb560eb45264ac1c03f359436edef",
+  "version": "1.0",
+  "created_at": "2017-03-29T20:40:49Z"
+ },
+ {
+  "instance_id": "sympy__sympy-12481",
+  "repo": "sympy/sympy",
+  "base_commit": "c807dfe7569692cad24f02a08477b70c1679a4dd",
+  "version": "1.0",
+  "created_at": "2017-04-03T01:52:33Z"
+ },
+ {
+  "instance_id": "sympy__sympy-13031",
+  "repo": "sympy/sympy",
+  "base_commit": "2dfa7457f20ee187fbb09b5b6a1631da4458388c",
+  "version": "1.1",
+  "created_at": "2017-07-23T15:48:13Z"
+ },
+ {
+  "instance_id": "sympy__sympy-13043",
+  "repo": "sympy/sympy",
+  "base_commit": "a3389a25ec84d36f5cf04a4f2562d820f131db64",
+  "version": "1.1",
+  "created_at": "2017-07-26T00:29:45Z"
+ },
+ {
+  "instance_id": "sympy__sympy-13146",
+  "repo": "sympy/sympy",
+  "base_commit": "b678d8103e48fdb1af335dbf0080b3d5366f2d17",
+  "version": "1.1",
+  "created_at": "2017-08-18T05:51:45Z"
+ },
+ {
+  "instance_id": "sympy__sympy-13177",
+  "repo": "sympy/sympy",
+  "base_commit": "662cfb818e865f580e18b59efbb3540c34232beb",
+  "version": "1.1",
+  "created_at": "2017-08-22T20:28:20Z"
+ },
+ {
+  "instance_id": "sympy__sympy-13437",
+  "repo": "sympy/sympy",
+  "base_commit": "674afc619d7f5c519b6a5393a8b0532a131e57e0",
+  "version": "1.1",
+  "created_at": "2017-10-12T18:21:19Z"
+ },
+ {
+  "instance_id": "sympy__sympy-13471",
+  "repo": "sympy/sympy",
+  "base_commit": "3546ac7ed78e1780c1a76929864bb33330055740",
+  "version": "1.1",
+  "created_at": "2017-10-17T22:52:35Z"
+ },
+ {
+  "instance_id": "sympy__sympy-13480",
+  "repo": "sympy/sympy",
+  "base_commit": "f57fe3f4b3f2cab225749e1b3b38ae1bf80b62f0",
+  "version": "1.1",
+  "created_at": "2017-10-18T17:27:03Z"
+ },
+ {
+  "instance_id": "sympy__sympy-13647",
+  "repo": "sympy/sympy",
+  "base_commit": "67e3c956083d0128a621f65ee86a7dacd4f9f19f",
+  "version": "1.1",
+  "created_at": "2017-11-28T21:22:51Z"
+ },
+ {
+  "instance_id": "sympy__sympy-13773",
+  "repo": "sympy/sympy",
+  "base_commit": "7121bdf1facdd90d05b6994b4c2e5b2865a4638a",
+  "version": "1.1",
+  "created_at": "2017-12-19T10:44:38Z"
+ },
+ {
+  "instance_id": "sympy__sympy-13895",
+  "repo": "sympy/sympy",
+  "base_commit": "4da0b64558e9551a11a99bccc63557ba34f50c58",
+  "version": "1.1",
+  "created_at": "2018-01-11T19:43:54Z"
+ },
+ {
+  "instance_id": "sympy__sympy-13915",
+  "repo": "sympy/sympy",
+  "base_commit": "5c1644ff85e15752f9f8721bc142bfbf975e7805",
+  "version": "1.1",
+  "created_at": "2018-01-13T20:41:07Z"
+ },
+ {
+  "instance_id": "sympy__sympy-13971",
+  "repo": "sympy/sympy",
+  "base_commit": "84c125972ad535b2dfb245f8d311d347b45e5b8a",
+  "version": "1.1",
+  "created_at": "2018-01-20T10:03:44Z"
+ },
+ {
+  "instance_id": "sympy__sympy-14024",
+  "repo": "sympy/sympy",
+  "base_commit": "b17abcb09cbcee80a90f6750e0f9b53f0247656c",
+  "version": "1.1",
+  "created_at": "2018-01-27T05:55:11Z"
+ },
+ {
+  "instance_id": "sympy__sympy-14308",
+  "repo": "sympy/sympy",
+  "base_commit": "fb536869fb7aa28b2695ad7a3b70949926b291c4",
+  "version": "1.1",
+  "created_at": "2018-02-22T16:54:06Z"
+ },
+ {
+  "instance_id": "sympy__sympy-14317",
+  "repo": "sympy/sympy",
+  "base_commit": "fb536869fb7aa28b2695ad7a3b70949926b291c4",
+  "version": "1.1",
+  "created_at": "2018-02-24T10:05:10Z"
+ },
+ {
+  "instance_id": "sympy__sympy-14396",
+  "repo": "sympy/sympy",
+  "base_commit": "f35ad6411f86a15dd78db39c29d1e5291f66f9b5",
+  "version": "1.1",
+  "created_at": "2018-03-05T19:18:01Z"
+ },
+ {
+  "instance_id": "sympy__sympy-14774",
+  "repo": "sympy/sympy",
+  "base_commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+  "version": "1.1",
+  "created_at": "2018-06-05T08:03:47Z"
+ }
+]

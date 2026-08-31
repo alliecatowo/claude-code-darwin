@@ -1,0 +1,163 @@
+[
+ {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "b90661d6a46aa3619d3eec94d5281f5888add501",
+  "version": "0.20",
+  "created_at": "2017-12-12T22:07:47Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-10508",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "c753b77ac49e72ebc0fe5e3c2369fe628f975017",
+  "version": "0.20",
+  "created_at": "2018-01-19T18:00:29Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-10949",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "3b5abf76597ce6aff76192869f92647c1b5259e7",
+  "version": "0.20",
+  "created_at": "2018-04-10T15:30:56Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-11040",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "96a02f3934952d486589dddd3f00b40d5a5ab5f2",
+  "version": "0.20",
+  "created_at": "2018-04-28T07:18:33Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-11281",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "4143356c3c51831300789e4fdf795d83716dbab6",
+  "version": "0.20",
+  "created_at": "2018-06-15T17:15:25Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-12471",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "02dc9ed680e7f53f1b0d410dcdd37341c7958eb1",
+  "version": "0.21",
+  "created_at": "2018-10-27T10:43:48Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-13142",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "1c8668b0a021832386470ddf740d834e02c66f69",
+  "version": "0.21",
+  "created_at": "2019-02-12T14:32:37Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-13241",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "f8b108d0c6f2f82b2dc4e32a6793f9d9ac9cf2f4",
+  "version": "0.21",
+  "created_at": "2019-02-25T11:27:41Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-13439",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+  "version": "0.21",
+  "created_at": "2019-03-12T20:32:50Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-13496",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "3aefc834dce72e850bff48689bea3c7dff5f3fad",
+  "version": "0.21",
+  "created_at": "2019-03-23T09:46:59Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-13497",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "26f690961a52946dd2f53bf0fdd4264b2ae5be90",
+  "version": "0.21",
+  "created_at": "2019-03-23T14:28:08Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-13584",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "0e3c1879b06d839171b7d0a607d71bbb19a966a9",
+  "version": "0.21",
+  "created_at": "2019-04-05T23:09:48Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-13779",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "b34751b7ed02b2cfcc36037fb729d4360480a299",
+  "version": "0.22",
+  "created_at": "2019-05-03T13:24:57Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-14087",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "a5743ed36fbd3fbc8e351bdab16561fbfca7dfa1",
+  "version": "0.22",
+  "created_at": "2019-06-13T20:09:22Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-14092",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "df7dd8391148a873d157328a4f0328528a0c4ed9",
+  "version": "0.22",
+  "created_at": "2019-06-14T14:16:17Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-14894",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "fdbaa58acbead5a254f2e6d597dc1ab3b947f4c6",
+  "version": "0.22",
+  "created_at": "2019-09-05T17:41:11Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-14983",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "06632c0d185128a53c57ccc73b25b6408e90bb89",
+  "version": "0.22",
+  "created_at": "2019-09-14T15:31:18Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-15512",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "b8a4da8baa1137f173e7035f104067c7d2ffde22",
+  "version": "0.22",
+  "created_at": "2019-11-02T22:28:57Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-15535",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "70b0ddea992c01df1a41588fa9e2d130fb6b13f8",
+  "version": "0.22",
+  "created_at": "2019-11-05T02:09:55Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-25500",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "4db04923a754b6a2defa1b172f55d492b85d165e",
+  "version": "1.3",
+  "created_at": "2023-01-27T19:49:28Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-25570",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "cd25abee0ad0ac95225d4a9be8948eff69f49690",
+  "version": "1.3",
+  "created_at": "2023-02-08T18:28:21Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-25638",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "6adb209acd63825affc884abcd85381f148fb1b0",
+  "version": "1.3",
+  "created_at": "2023-02-17T22:17:50Z"
+ },
+ {
+  "instance_id": "scikit-learn__scikit-learn-25747",
+  "repo": "scikit-learn/scikit-learn",
+  "base_commit": "2c867b8f822eb7a684f0d5c4359e4426e1c9cfe0",
+  "version": "1.3",
+  "created_at": "2023-03-02T20:38:47Z"
+ }
+]

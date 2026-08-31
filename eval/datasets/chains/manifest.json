@@ -1,0 +1,26 @@
+[
+ {
+  "repo": "django/django",
+  "slug": "django",
+  "path": "eval/datasets/chains/django.json",
+  "n": 25
+ },
+ {
+  "repo": "sympy/sympy",
+  "slug": "sympy",
+  "path": "eval/datasets/chains/sympy.json",
+  "n": 25
+ },
+ {
+  "repo": "matplotlib/matplotlib",
+  "slug": "matplotlib",
+  "path": "eval/datasets/chains/matplotlib.json",
+  "n": 23
+ },
+ {
+  "repo": "scikit-learn/scikit-learn",
+  "slug": "scikit-learn",
+  "path": "eval/datasets/chains/scikit-learn.json",
+  "n": 23
+ }
+]

@@ -784,9 +784,10 @@ def main() -> None:
             # project hash so darwin's memory accumulates for THIS repo.
             # Reset to the instance's base_commit, preserving harness dirs.
             if not (_fixed / ".git").exists():
-                url = f"https://github.com/{repo}"
-                print(f"[run_task] chain: cloning {url} -> {_fixed}", file=sys.stderr)
-                subprocess.run(["git", "clone", url, str(_fixed)], check=True, timeout=600,
+                src = os.environ.get("DARWIN_CHAIN_SOURCE") or f"https://github.com/{repo}"
+                shared = ["--shared"] if src.startswith("/") else []
+                print(f"[run_task] chain: cloning {src} -> {_fixed}", file=sys.stderr)
+                subprocess.run(["git", "clone", *shared, src, str(_fixed)], check=True, timeout=1800,
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             for gs in (["git", "-C", str(_fixed), "checkout", "-f", base_commit],
                        ["git", "-C", str(_fixed), "clean", "-fdx", "-e", ".opencode", "-e", ".darwin"]):

@@ -3,8 +3,8 @@
 #
 # Topology: darwin chains are SEQUENTIAL per (repo, seed) — memory accumulates,
 # that's the treatment — but (repo × seed) jobs run in PARALLEL up to J slots.
-# Vanilla mirrors the same sequential shape per (repo, seed) for paired metrics
-# (its order is irrelevant but keeps per-task duration comparable).
+# Vanilla is fully parallel per (repo, seed) (no memory, isolated mkdtemp worktrees,
+# per-task preds merged; order irrelevant) for ~8× wall-time reduction.
 # Real swebench grading per arm batch at the end (containers in parallel).
 #
 # Usage: ./eval/scripts/run_night_matrix.sh [--repos N] [--seeds 3] [--jobs 8]
@@ -63,6 +63,71 @@ run_chain () {
   export IS_DARWIN=$([[ "$ARM" == "darwin" ]] && echo 1 || echo 0)
   [[ "$ARM" == "vanilla" ]] && rm -rf "$HOME_DIR" && mkdir -p "$HOME_DIR"
   local IDS=$(python3 -c "import json;print(' '.join(r['instance_id'] for r in json.load(open('$DS'))))")
+  # VANILLA: fully parallel — no memory, fresh DARWIN_HOME, isolated mkdtemp worktrees
+  # DARWIN: sequential (memory accumulates, stable worktree at $WT)
+  if [[ "$ARM" == "vanilla" ]]; then
+    local VANILLA_JOBS=8
+    local TMP_PARTS_DIR="$OUT/.tmp_parts_${SLUG}_s${SEED}_${ARM}"
+    mkdir -p "$TMP_PARTS_DIR"
+    : > "$OUT/chain_${SLUG}_s${SEED}_${ARM}.log"
+    local i=0
+    for IID in $IDS; do
+      i=$((i+1))
+      local PART_PRED="$TMP_PARTS_DIR/part_${i}_${IID}.jsonl"
+      : > "$PART_PRED"
+      while [[ $(jobs -rp | wc -l) -ge $VANILLA_JOBS ]]; do wait -n || true; done
+      (
+        export DARWIN_HOME="$TMP_PARTS_DIR/home_${i}"
+        mkdir -p "$DARWIN_HOME"
+        export DS_FILE="$DS"
+        export MODEL_ID="$MODEL"
+        export TASK_TIMEOUT="$TIMEOUT"
+        python3 - "$ROOT" "$SCRIPT_DIR" "$PART_PRED" "$IID" "$i" << 'PY' > "$TMP_PARTS_DIR/log_${i}_${IID}.log" 2>&1
+import json, subprocess, sys, os
+root, sdir, pred, iid, idx = sys.argv[1:7]
+ds = os.environ.get("DS_FILE")
+cmd = ["python3", f"{sdir}/../harness/run_task.py", "--instance-id", iid,
+       "--model", os.environ.get("MODEL_ID"), "--workdir", f"{root}/eval/workdir",
+       "--output", pred, "--dataset", ds, "--timeout", os.environ.get("TASK_TIMEOUT")]
+r = subprocess.run(cmd, capture_output=True, text=True)
+print(r.stderr[-500:] if r.stderr else "", flush=True)
+try:
+    lines = open(pred).read().strip().splitlines()
+    if lines:
+        last = json.loads(lines[-1]); last["_chain_idx"] = int(idx)
+        lines[-1] = json.dumps(last)
+        open(pred, "w").write("\n".join(lines) + "\n")
+except Exception as e:
+    print(f"tag failed for {iid}: {e}", file=sys.stderr)
+PY
+      ) &
+    done
+    wait || true
+    # aggregate logs in chain order
+    i=0
+    for IID in $IDS; do
+      i=$((i+1))
+      if [[ -f "$TMP_PARTS_DIR/log_${i}_${IID}.log" ]]; then
+        cat "$TMP_PARTS_DIR/log_${i}_${IID}.log" >> "$OUT/chain_${SLUG}_s${SEED}_${ARM}.log"
+      fi
+    done
+    # merge predictions in chain order (per-task temp files -> atomic final PRED)
+    : > "$PRED"
+    i=0
+    for IID in $IDS; do
+      i=$((i+1))
+      PART_PRED="$TMP_PARTS_DIR/part_${i}_${IID}.jsonl"
+      if [[ -s "$PART_PRED" ]]; then
+        cat "$PART_PRED" >> "$PRED"
+      else
+        echo "warn: missing part for $IID (i=$i)" >> "$OUT/chain_${SLUG}_s${SEED}_${ARM}.log"
+      fi
+    done
+    rm -rf "$TMP_PARTS_DIR"
+    unset DARWIN_HOME
+    return 0
+  fi
+  # DARWIN: sequential exactly as before
   local i=0
   for IID in $IDS; do
     i=$((i+1))

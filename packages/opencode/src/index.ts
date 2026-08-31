@@ -17,6 +17,7 @@ import {
   globalMemoryPath,
   sessionNotesPath,
   ensureMemorySkeleton,
+  projectId,
   JUDGE_SYSTEM,
   judgePrompt,
   parseVerdict,
@@ -645,13 +646,61 @@ const plugin: Plugin = async (input, optionsRaw) => {
       const sid = input2.sessionID
       if (state.injected.has(sid) || state.spawned.has(sid)) return
       state.injected.add(sid)
-      const maxLines = state.opts.memoryDigestLines ?? 60
-      const project = readHead(projectMemoryPath(state.p, input.directory), 120)
-      const globalH = readHead(globalMemoryPath(state.p), 150)
-      const notes = readHead(sessionNotesPath(state.p, sid), 30)
-      const digest = [project && `### Project memory\n${project}`, globalH && `### Global memory\n${globalH}`, notes && `### Session notes (continuation)\n${notes}`]
-        .filter(Boolean)
-        .join("\n\n")
+      const isEval = !!process.env.DARWIN_EVAL || (process.env.DARWIN_HOME ?? "").includes("night")
+      const rawQuery =
+        (input2 as any).text ??
+        (input2 as any).prompt ??
+        (output as any).message?.text ??
+        (output.parts.find((p: any) => p?.type === "text" && typeof p?.text === "string") as any)?.text ??
+        ""
+      const query = typeof rawQuery === "string" ? rawQuery : String(rawQuery ?? "")
+      const projectLines = state.opts.memoryDigestLines ? Math.max(10, state.opts.memoryDigestLines - 15) : 40
+      const notesLines = 15
+      const dir = (input2 as any).directory ?? state.directory
+      const project = readHead(projectMemoryPath(state.p, dir), projectLines)
+      const notes = readHead(sessionNotesPath(state.p, sid), notesLines)
+      let hits: { snippet: string; type: string; path: string; score: number }[] = []
+      try {
+        const s = store()
+        reconcile(s, state.p)
+        if (query.trim()) {
+          const pid = projectId(dir)
+          hits = s.search(query, { scope: "projects", scopeId: pid, limit: 4, floor: 0.25 })
+        }
+      } catch (err) {
+        log.warn("darwin: BM25 search failed", err instanceof Error ? err.message : String(err))
+      }
+      // Always include Patterns/Gotchas (working style) — these transfer even when specific fixes don't
+      const patterns = (() => {
+        try {
+          const full = readHead(projectMemoryPath(state.p, dir), 500) ?? ""
+          const sections = full.split(/^## /m)
+          const keep = sections.filter(s => s.startsWith("Patterns") || s.startsWith("Gotchas"))
+          if (!keep.length) return ""
+          // Trim to ~15 lines max for Patterns/Gotchas
+          const text = ("## " + keep.join("## ")).split("\n").slice(0, 15).join("\n")
+          // Avoid duplicating if already in project head
+          if (project && text.split("\n").every(l => !l.trim() || project.includes(l.trim().slice(0, 40)))) return ""
+          return text
+        } catch { return "" }
+      })()
+      const digestParts: string[] = []
+      if (project) digestParts.push(`### Project memory\n${project}`)
+      if (patterns) digestParts.push(patterns)
+      if (!isEval) {
+        // global suppressed for eval; keep suppressed entirely to avoid +138% cost bloat.
+        // Intentionally no global head injection here. If needed outside eval, use BM25 hits which already cover global via search scope if desired.
+        void globalMemoryPath
+      }
+      if (notes) digestParts.push(`### Session notes (continuation)\n${notes}`)
+      if (hits.length > 0) {
+        const snippets = hits
+          .slice(0, 4)
+          .map((h) => `- ${h.snippet} [${h.type}:${h.path.split("/").pop()}]`)
+          .join("\n")
+        digestParts.push(`### Relevant memory\n${snippets}`)
+      }
+      const digest = digestParts.filter(Boolean).join("\n\n")
       if (digest)
         output.parts.unshift({
           id: `prt_${crypto.randomUUID().replace(/-/g, "").slice(0, 24)}`,
