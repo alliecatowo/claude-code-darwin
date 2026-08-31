@@ -93,12 +93,25 @@ Same 5 tasks re-run 3 rounds, both conditions. Two runs:
 | `eval/scripts/run_matrix.sh` / `compare.py` | matrix runner + Wilson-CI comparison |
 | `eval/Dockerfile` / `docker-compose.yml` | containerized runs (host-config isolation) |
 
-## Planned / not yet run
+## Night matrix (2026-08-31) — repo-dependent signal, 576 tasks
 
-- **Real swebench re-grade** of all chain predictions (free, container time only).
-- **Ceiling arms** (`ceiling-sonnet*`, `ceiling-deepseek*` from experiments.yaml) when budget allows.
-- **Claude Code cross-harness** (`run_task_claude.py`) once the CC plugin exists.
-- **Single-long-session eval** (goal/phoenix/notes under one multi-hour task).
+**Pooled:** darwin +138% cost, +99% tokens, -8% time (Wilcoxon p≈0, all paired n=288) — cost/token bloat from 300-line head dump, time still slightly faster. Hidden by pooling heterogeneous repos; per-repo tells the truth:
+
+| repo | SKIP (darwin fails, van wins) | WIN (darwin wins) | Verdict |
+|---|---|---|---|
+| django | 8 | 1 | darwin hurts |
+| matplotlib | 3 | 8 | **darwin helps** |
+| scikit-learn | 8 | 7 | wash |
+| sympy | 1 | 13 | **darwin helps a lot** |
+
+**Single-issue vs same-codebase signal holds:** Django fixes are independent (StaticURL ≠ GroupBy …) — head noise hurts. Sympy fixes share symbolic patterns — head happens to be in-family. The digest is the root cause: `project 120 + global 150 + notes 30 = 300 lines` injected blindly every turn (see `packages/opencode/src/index.ts:644-662`). BM25 store (`store.ts:114`) exists but is never called for injection. Night pooled +138% is the bloat; solo chain -27% cost was clean.
+
+## Planned / next (in PLAN_MASSIVE.md)
+
+- **D1 (highest impact):** query-scoped BM25 injection (project hits, floor 0.25, ≤4 snippets + 40-line skeleton) replacing head dump.
+- **D2:** suppress global in eval (threshold 0.35, or `DARWIN_DISABLE_GLOBAL=1`).
+- **B1:** vanilla fully parallel (embarrassingly parallel, -4-7× wall time); darwin stays sequential.
+- Ceiling arms, Claude Code cross-harness, single-long-session eval — same as before.
 
 ## Night matrix operational log (2026-08-30/31)
 
