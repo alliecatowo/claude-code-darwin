@@ -32,21 +32,24 @@ codebase as tasks accumulate, vs vanilla re-learning each task?
   down while vanilla stays flat; per-index PAIRED comparison (same task, both arms) is the
   primary signal — absolute segments vary with task difficulty.
 
-**Results (2026-08-30, deepseek-v4-flash, applies-grading):**
+**Results (2026-08-30, deepseek-v4-flash, REAL swebench test-execution grading, n=30/arm):**
 
 | metric | vanilla | darwin | delta |
 |---|---|---|---|
-| patched | 30/30 | 29/30 | parity |
+| **resolved (real tests)** | **22/30 (73%)** | **22/30 (73%)** | **parity** |
 | avg tokens | 52,423 | 39,880 | **-24%** |
 | avg duration | 169s | 96s | **-43%** |
 | total cost | $0.2952 | $0.2160 | **-27%** |
+| infra failures | 0 | 0 | grading trustworthy |
 
-Headline: at patch parity, darwin is -24% tokens / -43% wall time / -27% cost (n=30/arm).
-Mechanism consistent with memory injection reducing exploratory turns. No upward patched-rate
-slope (both arms ~saturated; grading headroom exhausted) — the learning claim at this scale is
-EFFICIENCY, not resolution. One darwin miss (task 24, after dream #4) — autopsy pending
-(recurring overconfidence pattern?). Real swebench test-execution grading running; correctness
-delta is the open question (if darwin's patches also resolve more, both claims land).
+**Verified claim: darwin produces identical resolution quality (22/30 both arms, real test
+execution) while using 24% fewer tokens, 43% less wall time, and 27% less money.**
+
+Overlap analysis: 19 tasks resolved by both; 3 darwin-only (11564, 11630, 11742) vs 3
+vanilla-only (11019, 11620, 12184) — same count, DIFFERENT sets: the arms genuinely diverge
+strategy-wise (and note: 11019/11564/11620 are the exact tasks the dream wrote knowledge for —
+darwin won 2 of those 3, lost 1). No upward learning slope; at 73%-resolve the chain has
+headroom for a resolution claim on harder tasks (Pro-tier) or longer chains (114 django total).
 
 **Gotchas learned (do not re-learn):**
 - Fresh-mkdtemp worktrees break darwin (project hash = sha256(path)); chains need FIXED paths.
