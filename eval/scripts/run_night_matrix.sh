@@ -25,6 +25,9 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$SCRIPT_DIR/../.."
 CHAIN_DIR="$ROOT/eval/datasets/chains"
+# Keep all temp/work on /home (not /tmp tmpfs) — avoids quota hammering
+mkdir -p "$ROOT/eval/workdir/tmp"
+export TMPDIR="$ROOT/eval/workdir/tmp"
 OUT="$ROOT/eval/results/night-$(date +%m%d-%H%M)"
 [[ $SMOKE == 1 ]] && OUT="$ROOT/eval/results/night-smoke"
 mkdir -p "$OUT"
@@ -102,6 +105,16 @@ for m in man:
 PY
 run_pair () {
   local SLUG="$1" SEED="$2" DS="$3"
+  # RESUME GUARD: skip cells whose both arms are already complete
+  local N=$(python3 -c "import json;print(len(json.load(open('$DS'))))")
+  local PD="$OUT/predictions_darwin_${SLUG}__seed${SEED}.jsonl"
+  local PV="$OUT/predictions_vanilla_${SLUG}__seed${SEED}.jsonl"
+  local ND=$(grep -c . "$PD" 2>/dev/null || echo 0)
+  local NV=$(grep -c . "$PV" 2>/dev/null || echo 0)
+  if [[ "$ND" -ge "$N" && "$NV" -ge "$N" ]]; then
+    echo "skip $SLUG s$SEED (complete: $ND/$NV of $N)" >> "$OUT/run.log"
+    return 0
+  fi
   run_chain "$SLUG" "$SEED" darwin "$DS"
   run_chain "$SLUG" "$SEED" vanilla "$DS"
 }
