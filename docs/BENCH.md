@@ -99,3 +99,19 @@ Same 5 tasks re-run 3 rounds, both conditions. Two runs:
 - **Ceiling arms** (`ceiling-sonnet*`, `ceiling-deepseek*` from experiments.yaml) when budget allows.
 - **Claude Code cross-harness** (`run_task_claude.py`) once the CC plugin exists.
 - **Single-long-session eval** (goal/phoenix/notes under one multi-hour task).
+
+## Night matrix operational log (2026-08-30/31)
+
+- **OOM**: 10 concurrent chain jobs × full clones × opencode processes killed the box →
+  topology now: shared repo cache (`--shared` clones), pair-level jobs (darwin→vanilla
+  sequential), 3 slots, 2.5GB memory guard, 20s stagger.
+- **Disk quota**: swebench per-instance images accumulate (~22GB) → `podman image prune -a`
+  after grading batches; /tmp tmpfs also fills (venvs, e2e artifacts).
+- **Bash stdin bug**: background jobs inherit the launcher's stdin (the joblist file) and
+  consume it → launcher exits early. Fix: `... < /dev/null &` on every background job.
+- **Orphan processes**: killing a runner orphans in-flight run_tasks (they keep writing to
+  the old results dir). Kill by exact PID tree; stats pair by `_chain_idx` with
+  last-write-wins so interleaved files self-heal.
+- **Runners create their own timestamped OUT dir per invocation** — "resume" requires the
+  resume guard (skip complete cells), not directory reuse. Monitor must target the newest dir.
+- Budget: all-time eval spend ~$2.60 through 22:26; night matrix projected ~$6 total.

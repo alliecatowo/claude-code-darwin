@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # monitor_night.sh — real progress monitoring, not done-checking.
 # Per-cell progress, spend, errors/timeouts, rate-limit hits, worker health.
-ROOT_DIR=$(ls -d eval/results/night-0830* 2>/dev/null | head -1)
+ROOT_DIR=$(ls -dt eval/results/night-* 2>/dev/null | grep -v smoke | head -1)
 [[ -z "$ROOT_DIR" ]] && echo "no night dir" && exit 1
 echo "=== $(date +%H:%M) — $ROOT_DIR ==="
 
@@ -13,7 +13,7 @@ echo "workers alive: $W (slots: 3)"
 # 2. per-cell progress (arm lines / expected)
 python3 - << 'PY'
 import json, glob, os
-root = glob.glob("eval/results/night-0830*")[0]
+root = sorted(glob.glob("eval/results/night-*"), key=os.path.getmtime)[-1]
 cells = {}
 for arm in ("darwin","vanilla"):
     for f in glob.glob(f"{root}/predictions_{arm}_*.jsonl"):
