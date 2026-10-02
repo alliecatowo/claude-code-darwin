@@ -1,2 +1,10 @@
 vendor/
 node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.mcp.json
+*.log
+.DS_Store
+*.tsbuildinfo
