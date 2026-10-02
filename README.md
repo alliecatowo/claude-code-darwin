@@ -5,6 +5,9 @@ A self-improving coding-agent harness — MiMo-Code's feature set (reference spe
 **Claude Code**. Not a fork: 100% feature parity via plugin APIs where possible, with documented
 exceptions ([docs/FEASIBILITY.md](docs/FEASIBILITY.md)).
 
+> **Status: work in progress.** Only the opencode plugin exists; the Claude Code port is not built yet,
+> and nothing is published to npm. There is no LICENSE file yet.
+
 - [docs/RUNDOWN.md](docs/RUNDOWN.md) — every capability × limits × keep/toss verdict (decision doc)
 - [docs/SPEC.md](docs/SPEC.md) — complete MiMo-Code specification (vendored @ `092e42f`, 2026-08-29)
 - [docs/FEASIBILITY.md](docs/FEASIBILITY.md) — plugin-parity mapping + concerns
