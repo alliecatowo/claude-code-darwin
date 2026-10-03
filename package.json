@@ -8,7 +8,7 @@
     "test": "bun test packages/core"
   },
   "devDependencies": {
-    "typescript": "^5.9.2",
+    "typescript": "^7.0.2",
     "@types/node": "^26"
   }
 }
