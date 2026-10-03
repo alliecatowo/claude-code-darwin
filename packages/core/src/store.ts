@@ -201,7 +201,8 @@ export class Store {
         last_verdict: string | null
       }
     | undefined {
-    return this.db.query("SELECT * FROM goal WHERE session_id = ?").get(sessionID) as never
+    // bun:sqlite returns null for a missing row, not undefined
+    return (this.db.query("SELECT * FROM goal WHERE session_id = ?").get(sessionID) ?? undefined) as never
   }
 
   bumpGoal(sessionID: string, verdict: string): void {

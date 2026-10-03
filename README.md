@@ -5,8 +5,8 @@ A self-improving coding-agent harness — MiMo-Code's feature set (reference spe
 **Claude Code**. Not a fork: 100% feature parity via plugin APIs where possible, with documented
 exceptions ([docs/FEASIBILITY.md](docs/FEASIBILITY.md)).
 
-> **Status: work in progress.** Only the opencode plugin exists; the Claude Code port is not built yet,
-> and nothing is published to npm. There is no LICENSE file yet.
+> **Status: work in progress.** The opencode plugin exists; the Claude Code port ships skills only so far,
+> and nothing is published to npm. MIT licensed.
 
 - [docs/RUNDOWN.md](docs/RUNDOWN.md) — every capability × limits × keep/toss verdict (decision doc)
 - [docs/SPEC.md](docs/SPEC.md) — complete MiMo-Code specification (vendored @ `092e42f`, 2026-08-29)
@@ -33,3 +33,14 @@ Pre-release and unpublished (no npm package or release yet). Port status:
 | Claude Code | `packages/claude` | Not started (phase 2, see [docs/PLAN.md](docs/PLAN.md)); no Claude Code plugin exists in this repo yet |
 
 `packages/core` is host-agnostic and has tests (`bun test packages/core`).
+
+## Development
+
+```
+npm ci                     # install (npm workspaces)
+npm run typecheck          # tsc over packages/core and packages/opencode
+bun test packages/core     # unit tests (store, memory, scheduler, goal, economics); Bun 1.4+
+```
+
+`packages/core` uses `bun:sqlite`, so tests need Bun; CI runs both commands on every push and pull
+request. Agents working in this repo: see [`.opencode/`](.opencode) and [docs/PLAN.md](docs/PLAN.md).
