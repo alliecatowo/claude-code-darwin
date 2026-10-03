@@ -12,3 +12,14 @@ exceptions ([docs/FEASIBILITY.md](docs/FEASIBILITY.md)).
 - [docs/SPEC.md](docs/SPEC.md) — complete MiMo-Code specification (vendored @ `092e42f`, 2026-08-29)
 - [docs/FEASIBILITY.md](docs/FEASIBILITY.md) — plugin-parity mapping + concerns
 - [docs/PLAN.md](docs/PLAN.md) — porting plan (opencode first, then Claude Code)
+
+## Status
+
+Pre-release and unpublished (no npm package or release yet). Port status:
+
+| Host | Package | State |
+| --- | --- | --- |
+| opencode v1 | `packages/opencode` | In progress; shared logic lives in `packages/core` |
+| Claude Code | `packages/claude` | Not started (phase 2, see [docs/PLAN.md](docs/PLAN.md)); no Claude Code plugin exists in this repo yet |
+
+`packages/core` is host-agnostic and has tests (`bun test packages/core`).
