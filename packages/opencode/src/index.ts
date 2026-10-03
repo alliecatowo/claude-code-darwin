@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { spawn } from "node:child_process"
 import { fileURLToPath } from "node:url"
 import { tool, type Plugin } from "@opencode-ai/plugin"
-import { z } from "zod"
+const z = tool.schema
 import {
   Store,
   readEnv,
