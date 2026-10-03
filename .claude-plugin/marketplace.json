@@ -1,0 +1,14 @@
+{
+  "name": "darwin",
+  "description": "Darwin, a self-improving coding-agent harness: skills for Claude Code",
+  "owner": { "name": "Allie Coleman" },
+  "plugins": [
+    {
+      "name": "darwin",
+      "source": "./",
+      "description": "Compose workflow, evolve, memory-search, super-research and skill-creator skills",
+      "version": "0.1.0",
+      "license": "MIT"
+    }
+  ]
+}

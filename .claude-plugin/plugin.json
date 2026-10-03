@@ -1,0 +1,19 @@
+{
+  "name": "darwin",
+  "description": "Darwin skills for Claude Code: compose workflow, evolve, memory-search, super-research and skill-creator. Skills only for now; the full harness port is not built yet.",
+  "version": "0.1.0",
+  "author": { "name": "Allie Coleman" },
+  "license": "MIT",
+  "repository": "https://github.com/alliecatowo/claude-code-darwin",
+  "skills": [
+    "./packages/skills/skills/compose-next",
+    "./packages/skills/skills/compose/compose-ask",
+    "./packages/skills/skills/compose/compose-review",
+    "./packages/skills/skills/compose/compose-tdd",
+    "./packages/skills/skills/compose/compose-verify",
+    "./packages/skills/skills/evolve",
+    "./packages/skills/skills/memory-search",
+    "./packages/skills/skills/skill-creator",
+    "./packages/skills/skills/super-research"
+  ]
+}
