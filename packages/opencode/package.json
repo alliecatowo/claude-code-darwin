@@ -10,6 +10,6 @@
   },
   "dependencies": {
     "@darwin/core": "*",
-    "@opencode-ai/plugin": "^1.18.33"
+    "@opencode-ai/plugin": "^1.19.0"
   }
 }
